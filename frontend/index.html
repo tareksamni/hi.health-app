@@ -40,32 +40,41 @@
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script type="module">
     import Vue from "https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.esm.browser.js";
-
-    const backendUrl = "http://localhost:3000";
-
-    var client = axios.create({
-      baseURL: backendUrl,
-    });
-
+    var client;
     var app = new Vue({
       el: "#app",
       data: {
         orders: [],
       },
-      mounted: function () {
-        this.loadOrder();
+      async mounted() {
+        await this.loadConfig();
+        this.initializeAxios();
+        await this.loadOrder();
       },
       methods: {
+        async loadConfig() {
+          try {
+            const response = await axios.get('config.json');
+            this.config = response.data;
+          } catch (error) {
+            console.error("Error loading the configuration: ", error);
+          }
+        },
+        initializeAxios() {
+          client = axios.create({
+            baseURL: this.config.backendUrl
+          });
+        },
         loadOrder: async function () {
           this.orders = (await client.get("/orders")).data;
         },
         addOrder: async function () {
           await client.post("/orders");
-          this.loadOrder();
+          await this.loadOrder();
         },
         deleteOrder: async function (id) {
           await client.delete("/orders/" + id);
-          this.loadOrder();
+          await this.loadOrder();
         },
       },
     });
