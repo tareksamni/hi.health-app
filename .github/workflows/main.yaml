@@ -1,0 +1,24 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-backend:
+    uses: ./.github/workflows/build.yaml
+    with:
+      dockerfile_path: docker/backend.Dockerfile
+      docker_image_name: "tareksamni/hi.health-backend"
+      docker_image_tag: "${{ github.sha }}"
+    secrets:
+      docker_auth_token: ${{ secrets.DOCKER_AUTH_TOKEN }}
+  build-frontend:
+    uses: ./.github/workflows/build.yaml
+    with:
+      dockerfile_path: docker/frontend.Dockerfile
+      docker_image_name: "tareksamni/hi.health-frontend"
+      docker_image_tag: "${{ github.sha }}"
+    secrets:
+      docker_auth_token: ${{ secrets.DOCKER_AUTH_TOKEN }}
