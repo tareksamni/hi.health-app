@@ -25,6 +25,7 @@ const createDBConnection = async (): Promise<DataSource> => {
     port: DB_PORT,
     database: DB_DATABASE,
     username: DB_USERNAME,
+    ssl: true,
     password: DB_ACCESS_TYPE === 'iam' ? async () => {
       return await rdssigner.getAuthToken();
     } : DB_PASSWORD!,
