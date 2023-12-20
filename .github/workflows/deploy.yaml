@@ -33,7 +33,7 @@ jobs:
         env:
           GITHUB_USER_NAME: ${{ github.actor }}
           GITHUB_USER_EMAIL: ${{ github.actor }}@users.noreply.github.com
-          CI_COMMIT_SHA: ${{ inputs.docker_tag }}
+          CI_COMMIT_SHA: ${{ inputs.docker_image_tag }}
         run: |
           echo "Updating k8s repo"
           GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa" git clone git@github.com:tareksamni/hi.health-infra.git infra
