@@ -22,3 +22,11 @@ jobs:
       docker_image_tag: "${{ github.sha }}"
     secrets:
       docker_auth_token: ${{ secrets.DOCKER_AUTH_TOKEN }}
+  deploy-argocd:
+    uses: ./.github/workflows/deploy.yaml
+    needs: build-backend build-frontend
+    with:
+      docker_image_tag: ${{ github.sha }}
+      environment_name: production
+    secrets:
+      ARGOCD_DEPLOY_KEY: ${{ secrets.ARGOCD_DEPLOY_KEY }}

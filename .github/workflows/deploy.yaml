@@ -1,0 +1,47 @@
+name: Deploy
+on:
+  workflow_call:
+    inputs:
+      docker_image_tag:
+        default: latest
+        required: true
+        type: string
+      environment_name:
+        required: true
+        type: string
+    secrets:
+      ARGOCD_DEPLOY_KEY:
+        required: true
+jobs:
+  argocd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install yq
+        run: |
+          sudo apt update
+          sudo apt install python3-pip
+          pip3 install yq
+      - name: Set up SSH deploy key
+        env:
+          ARGOCD_DEPLOY_KEY: ${{ secrets.ARGOCD_DEPLOY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$ARGOCD_DEPLOY_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - name: Update k8s repo
+        env:
+          GITHUB_USER_NAME: ${{ github.actor }}
+          GITHUB_USER_EMAIL: ${{ github.actor }}@users.noreply.github.com
+          CI_COMMIT_SHA: ${{ inputs.docker_tag }}
+        run: |
+          echo "Updating k8s repo"
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa" git clone git@github.com:tareksamni/hi.health-infra.git infra
+          yq -Y -i '.spec.template.spec.containers[0].image="tareksamni/hi.health-backend:'${CI_COMMIT_SHA}'"' "infra/argocd/${{inputs.environment_name}}/app/deployments/backend.yaml"
+          yq -Y -i '.spec.template.spec.containers[0].image="tareksamni/hi.health-frontend:'${CI_COMMIT_SHA}'"' "infra/argocd/${{inputs.environment_name}}/app/deployments/frontend.yaml"
+          cd infra
+          git config user.name "${GITHUB_USER_NAME}"
+          git config user.email "${GITHUB_USER_EMAIL}"
+          git add .
+          git commit -am "Update backend/frontend to ${CI_COMMIT_SHA} in ${{inputs.environment_name}}"
+          git push origin main
